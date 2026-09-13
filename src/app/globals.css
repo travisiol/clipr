@@ -1,0 +1,499 @@
+@import "tailwindcss";
+
+/* =============================================================================
+   CLIPR — on air.
+
+   A near-black ground with a warm nebula behind it, glass panes in front of
+   it, and one lit object: a chrome coin stamped with a play button. The colour
+   system is the colour of a record light.
+
+   THE COLOUR RULE, do not break it: ember→amber is the brand's energy and
+   marks exactly the things that move CLIPR — a primary button, the rate on a
+   card, a claimable amount, the play button on the coin. `--color-ok` means
+   one thing: *paid, on chain*. `--color-bad` means one thing: *rejected*.
+   Neither decorates. Everything else is chrome, glass and warm white.
+   ========================================================================== */
+
+@theme {
+  /* Only the void is opaque. Every surface above it is a wash the nebula
+     shows through, so panels frost the background instead of covering it. */
+  --color-void: #07070b;
+  --color-surface: rgba(255, 255, 255, 0.035);
+  --color-surface-2: rgba(255, 255, 255, 0.065);
+  --color-surface-3: rgba(255, 255, 255, 0.12);
+
+  --color-hi: #f3f1ec;
+  --color-mid: #aaa8b2;
+  --color-low: #83828e;
+
+  --color-ember: #ff6a2b;
+  --color-amber: #ffb347;
+  --color-ok: #3ddc84;
+  --color-bad: #ff4d6d;
+
+  --font-display: "Inter Tight", Inter, system-ui, sans-serif;
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --radius-card: 22px;
+  --radius-panel: 16px;
+  --radius-pill: 999px;
+}
+
+:root {
+  --glass: rgba(255, 255, 255, 0.045);
+  --glass-2: rgba(255, 255, 255, 0.075);
+  --rim: rgba(255, 255, 255, 0.12);
+  --rim-strong: rgba(255, 255, 255, 0.22);
+  --sheen: rgba(255, 255, 255, 0.09);
+  --specular: rgba(255, 255, 255, 0.32);
+
+  --line: rgba(255, 255, 255, 0.08);
+  --line-soft: rgba(255, 255, 255, 0.045);
+  --line-strong: rgba(255, 255, 255, 0.18);
+
+  --brand: linear-gradient(112deg, #ff6a2b 0%, #ffb347 100%);
+  --brand-soft: linear-gradient(112deg, rgba(255, 106, 43, 0.18) 0%, rgba(255, 179, 71, 0.18) 100%);
+  --ember-wash: rgba(255, 106, 43, 0.1);
+  --ok-wash: rgba(61, 220, 132, 0.1);
+  --bad-wash: rgba(255, 77, 109, 0.1);
+
+  --shell: 1200px;
+  --nav-h: 68px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  color-scheme: dark;
+}
+
+/* Element-level rules go in @layer base: an unlayered rule outranks every
+   layered one, utilities included. */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--color-hi);
+    background-color: var(--color-void);
+    /* The nebula, on the body itself and fixed, so it shows through every
+       glass surface on every route. */
+    background-image:
+      radial-gradient(900px 620px at 8% -6%, rgba(255, 106, 43, 0.26), transparent 62%),
+      radial-gradient(760px 560px at 96% 14%, rgba(255, 179, 71, 0.16), transparent 60%),
+      radial-gradient(700px 700px at 60% 110%, rgba(90, 110, 255, 0.13), transparent 60%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  ::selection {
+    background: rgba(255, 106, 43, 0.35);
+    color: var(--color-hi);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-amber);
+    outline-offset: 2px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Component classes go in @layer components so a utility can still override
+   any single property (`class="label text-ember"`). */
+@layer components {
+  .shell {
+    width: min(var(--shell), 100% - 2rem);
+    margin-inline: auto;
+  }
+  @media (min-width: 768px) {
+    .shell {
+      width: min(var(--shell), 100% - 3rem);
+    }
+  }
+
+  /* Type */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 0.98;
+  }
+  .label {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--color-low);
+  }
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+  .brand-text {
+    background: var(--brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Glass. A tint, a rim that catches light at the top, a sheen that dies
+     at 40 %, a shadow underneath so it reads as an object. */
+  .glass {
+    position: relative;
+    background:
+      linear-gradient(180deg, var(--sheen) 0%, transparent 40%),
+      var(--glass);
+    border: 1px solid var(--rim);
+    border-top-color: var(--rim-strong);
+    border-radius: var(--radius-panel);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.05) inset,
+      0 20px 50px -30px rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(18px) saturate(140%);
+  }
+  .glass-card {
+    border-radius: var(--radius-card);
+  }
+  .glass-strong {
+    background:
+      linear-gradient(180deg, var(--sheen) 0%, transparent 40%),
+      var(--glass-2);
+  }
+
+  /* Controls behave like objects: hover lifts, :active pushes back. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 44px;
+    padding: 0 20px;
+    border-radius: var(--radius-pill);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: -0.005em;
+    white-space: nowrap;
+    transition:
+      transform 0.18s var(--ease),
+      box-shadow 0.18s var(--ease),
+      background-color 0.18s var(--ease),
+      border-color 0.18s var(--ease),
+      opacity 0.18s var(--ease);
+    will-change: transform;
+  }
+  .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+  .btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  .btn-sm {
+    height: 36px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+  .btn-xs {
+    height: 30px;
+    padding: 0 12px;
+    font-size: 12.5px;
+  }
+  .btn-primary {
+    color: #140a05;
+    background: var(--brand);
+    box-shadow:
+      0 0 0 1px rgba(255, 179, 71, 0.35) inset,
+      0 10px 30px -12px rgba(255, 106, 43, 0.75);
+  }
+  .btn-primary:hover:not(:disabled) {
+    box-shadow:
+      0 0 0 1px rgba(255, 220, 160, 0.55) inset,
+      0 14px 34px -12px rgba(255, 106, 43, 0.9);
+  }
+  .btn-glass {
+    color: var(--color-hi);
+    background:
+      linear-gradient(180deg, var(--sheen) 0%, transparent 45%),
+      var(--glass-2);
+    border: 1px solid var(--rim);
+    border-top-color: var(--rim-strong);
+    backdrop-filter: blur(14px);
+  }
+  .btn-glass:hover:not(:disabled) {
+    border-color: var(--rim-strong);
+    background-color: var(--color-surface-3);
+  }
+  .btn-ghost {
+    color: var(--color-mid);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    color: var(--color-hi);
+  }
+  .btn-ok {
+    color: #05170c;
+    background: var(--color-ok);
+  }
+  .btn-bad {
+    color: var(--color-hi);
+    background: var(--bad-wash);
+    border: 1px solid rgba(255, 77, 109, 0.4);
+  }
+
+  /* Pills and chips */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    border: 1px solid var(--rim);
+    background: var(--glass);
+    color: var(--color-mid);
+    white-space: nowrap;
+  }
+  .pill-brand {
+    color: var(--color-amber);
+    border-color: rgba(255, 179, 71, 0.35);
+    background: var(--ember-wash);
+  }
+  .pill-ok {
+    color: var(--color-ok);
+    border-color: rgba(61, 220, 132, 0.35);
+    background: var(--ok-wash);
+  }
+  .pill-bad {
+    color: var(--color-bad);
+    border-color: rgba(255, 77, 109, 0.35);
+    background: var(--bad-wash);
+  }
+  .pill-hi {
+    color: var(--color-hi);
+    border-color: var(--rim-strong);
+  }
+
+  /* Fields */
+  .field {
+    display: block;
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid var(--line);
+    color: var(--color-hi);
+    transition: border-color 0.15s var(--ease);
+  }
+  .field::placeholder {
+    color: var(--color-low);
+  }
+  .field:focus {
+    outline: none;
+    border-color: rgba(255, 179, 71, 0.6);
+  }
+  textarea.field {
+    height: auto;
+    min-height: 120px;
+    padding: 12px 14px;
+    resize: vertical;
+    line-height: 1.5;
+  }
+  select.field {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--color-mid) 50%),
+      linear-gradient(135deg, var(--color-mid) 50%, transparent 50%);
+    background-position:
+      calc(100% - 18px) 19px,
+      calc(100% - 13px) 19px;
+    background-size:
+      5px 5px,
+      5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 36px;
+  }
+
+  /* Progress bar: the budget draining. */
+  .bar {
+    position: relative;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+  }
+  .bar > i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 999px;
+    background: var(--brand);
+    box-shadow: 0 0 14px rgba(255, 106, 43, 0.6);
+  }
+
+  .hairline {
+    border-color: var(--line);
+  }
+
+  .prose-muted {
+    color: var(--color-mid);
+  }
+  .prose-muted strong {
+    color: var(--color-hi);
+    font-weight: 600;
+  }
+
+  /* The record light. */
+  .dot-live {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--color-ember);
+    box-shadow: 0 0 0 3px rgba(255, 106, 43, 0.18), 0 0 12px rgba(255, 106, 43, 0.8);
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 3px rgba(255, 106, 43, 0.18), 0 0 12px rgba(255, 106, 43, 0.8);
+    }
+    50% {
+      box-shadow: 0 0 0 6px rgba(255, 106, 43, 0.06), 0 0 6px rgba(255, 106, 43, 0.4);
+    }
+  }
+
+  /* Marquee */
+  .marquee {
+    display: flex;
+    gap: 3rem;
+    width: max-content;
+    animation: marquee 38s linear infinite;
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  /* Fade-up on load, once, no scroll timelines (they capture at 0). */
+  .rise {
+    animation: rise 0.9s var(--ease) both;
+  }
+  .rise-2 {
+    animation-delay: 0.12s;
+  }
+  .rise-3 {
+    animation-delay: 0.24s;
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .spin {
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Table */
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  .table th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-low);
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: middle;
+  }
+  .table tr:last-child td {
+    border-bottom: 0;
+  }
+}
