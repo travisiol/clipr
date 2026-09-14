@@ -1,33 +1,44 @@
 import "server-only";
 import { DatabaseSync } from "node:sqlite";
-import { mkdirSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
 import type { Campaign, Submission, Voucher } from "@/lib/model";
 import { seedIfEmpty } from "@/lib/seed";
+import { pickDbPath, type DbPlacement } from "@/lib/dbPath";
 
 /**
- * One SQLite file, opened once per process. `node:sqlite` ships with Node 24,
- * so there is nothing to build and nothing to configure: the schema is
- * created on first open and the sample data seeded if the file is new.
+ * One SQLite file, opened once per process. `node:sqlite` ships with Node
+ * 22.13+ / 24, so there is nothing to build and nothing to configure: the
+ * schema is created on first open and the sample data seeded if the file is
+ * new. Where the file goes is decided in `dbPath.ts` — on a read-only host
+ * (Vercel) it lands in /tmp and `storageInfo()` says so.
  *
  * Amounts are wei as TEXT (SQLite integers stop at 2^63; 18 decimals do not).
  */
-
-// Statically scoped to ./data so the bundler does not trace the whole
-// project; an explicit CLIPR_DB_PATH opts out of that analysis on purpose.
-const DB_PATH = process.env.CLIPR_DB_PATH
-  ? resolve(/* turbopackIgnore: true */ process.env.CLIPR_DB_PATH)
-  : join(process.cwd(), "data", "clipr.db");
 
 declare global {
   // Survives Next's dev-time module reloads, which would otherwise open a
   // fresh handle per reload.
   var __cliprDb: DatabaseSync | undefined;
+  var __cliprDbPlacement: DbPlacement | undefined;
+}
+
+/** Where the database is and whether it will survive a restart. */
+export function storageInfo(): DbPlacement {
+  if (!globalThis.__cliprDbPlacement) {
+    const placement = pickDbPath();
+    if (placement.ephemeral) {
+      console.warn(
+        `[clipr] ${placement.reason} — using ${placement.path}. This storage is ephemeral: ` +
+          `the database resets on every cold start and is not shared between instances. ` +
+          `Set CLIPR_DB_PATH to a persistent disk, or move to a hosted database, before taking real submissions.`,
+      );
+    }
+    globalThis.__cliprDbPlacement = placement;
+  }
+  return globalThis.__cliprDbPlacement;
 }
 
 function open(): DatabaseSync {
-  mkdirSync(dirname(DB_PATH), { recursive: true });
-  const db = new DatabaseSync(DB_PATH);
+  const db = new DatabaseSync(storageInfo().path);
   db.exec("PRAGMA journal_mode = WAL");
   db.exec("PRAGMA foreign_keys = ON");
   db.exec(`

@@ -124,7 +124,31 @@ voucher on chain from the clipper's wallet, proves it cannot be redeemed
 twice, and checks that dashboard, campaign and escrow agree. It passed on
 2026-09-12.
 
-### Deploying for real
+### Deploying the site (Vercel)
+
+It deploys as is — with one thing to know. Vercel's functions run on a
+read-only filesystem, so the SQLite file cannot live in `./data`; the app
+detects this and falls back to `/tmp`, which is **ephemeral**: every cold
+start is a fresh, re-seeded database, and separate instances do not share
+it. The site runs, the sample campaigns show, sign-in and submissions
+work — until the next cold start wipes them. Good enough to show the
+project; not a place to keep real submissions. `/ops` shows the storage
+state in its first panel.
+
+Two Vercel settings matter:
+
+- **Node.js 22.13+** (`engines` in `package.json` asks for it; 24.x is what
+  this was built on). `node:sqlite` does not exist on Node 20.
+- **`SESSION_SECRET`** in the project's environment variables. Without it
+  each instance signs cookies with its own random key, and a wallet signed
+  in on one instance looks signed out on the next.
+
+For real persistence, either run on a host with a disk (Railway, Fly, a
+VPS — set `CLIPR_DB_PATH` to the mounted volume) or move the store to a
+hosted database: `src/lib/db.ts` is the only file that speaks SQL, and
+Turso / libSQL keeps the same dialect.
+
+### Deploying the contracts
 
 ```bash
 cd contracts

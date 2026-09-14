@@ -5,7 +5,7 @@ import { SignInGate } from "@/components/dashboard/SignInGate";
 import { OpsCampaignActions } from "@/components/ops/OpsCampaignActions";
 import { Notice, Panel, Pill, SectionTitle, Stat } from "@/components/ui";
 import { getSession, opsIsOpen } from "@/lib/auth";
-import { listCampaigns, listSubmissions } from "@/lib/db";
+import { listCampaigns, listSubmissions, storageInfo } from "@/lib/db";
 import { fmtToken, timeAgo } from "@/lib/format";
 import { trackingEndsAt, type Campaign } from "@/lib/model";
 import { economics, site } from "@/lib/site";
@@ -44,6 +44,7 @@ export default async function OpsPage() {
   const settled = queue.filter((s) => s.status === "settled");
   const pendingCampaigns = campaigns.filter((c) => c.status === "pending_budget");
   const signer = signerStatus();
+  const storage = storageInfo();
 
   const outstanding = settled.reduce((acc, s) => acc + BigInt(s.payout), 0n);
 
@@ -64,6 +65,11 @@ export default async function OpsPage() {
           </span>
           <span className="text-[12.5px] text-low">
             {opsIsOpen() ? "OPS_ADDRESSES is unset, so every signed-in wallet is ops in preview." : "Restricted to OPS_ADDRESSES."}
+          </span>
+          <span className={`text-[12.5px] ${storage.ephemeral ? "text-amber" : "text-low"}`}>
+            {storage.ephemeral
+              ? "Storage is ephemeral (read-only host): the database resets on every cold start. Set CLIPR_DB_PATH or a hosted database before real use."
+              : `Database on disk: ${storage.path}`}
           </span>
         </Panel>
         <Panel className="flex flex-col gap-2 p-5">
